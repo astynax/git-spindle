@@ -218,10 +218,13 @@ class BitBucket(GitSpindle):
 
     @command
     def create(self, opts):
-        """[--private] [--team=<team>] [--description=<description>]
+        """[--private] [--team=<team>] [--description=<description>] [--name=<name>] [--has-issues] [--has-wiki]
            Create a repository on bitbucket to push to"""
         root = self.gitm('rev-parse', '--show-toplevel').stdout.strip()
-        name = os.path.basename(root)
+        if opts['--name']:
+            name = opts['--name']
+        else:
+            name = os.path.basename(root)
         if opts['--team']:
             dest = self.bb.team(opts['--team'])
         else:
@@ -232,7 +235,13 @@ class BitBucket(GitSpindle):
         except bbapi.BitBucketError:
             pass
 
-        repo = dest.create_repository(slug=name, description=opts['--description'], is_private=opts['--private'], has_issues=True, has_wiki=True)
+        repo = dest.create_repository(
+            slug=name,
+            description=opts['--description'],
+            is_private=opts['--private'],
+            has_issues=opts['--has-issues'],
+            has_wiki=opts['--has-wiki'],
+        )
         if 'origin' in self.remotes():
             print("Remote 'origin' already exists, adding the BitBucket repository as 'bitbucket'")
             self.set_origin(opts, repo=repo, remote='bitbucket')
